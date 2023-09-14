@@ -17,3 +17,9 @@ Run ./compile.sh
 Run newly generated ./run.sh
 
 (dont forget to allow the files to execute)
+
+#Keys
+
+Ctrl-O opens a file
+Ctrl-S saves to a file
+arrow keys and home and end buttons work
