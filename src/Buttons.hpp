@@ -12,7 +12,6 @@ float UP = 1.0f / sz - 1;
 float LEFT = 1.0f / sz * 528.0f / 261.0f - 1;
 float HMUL = 1.0f, WMUL = 1.0f;
 GLFWwindow* EditorWindow;
-int timerBS = 60, timerUP = 60, timerDW = 60, timerLF = 60, timerRG = 60, timerEN = 60, timerCP = 60, timerCN = 60, timerSV = 60, timerOP = 60;
 
 void UpdateLeftAndUp() {
     UP = 1.0f / sz;
@@ -39,244 +38,119 @@ void KeyInput(GLFWwindow* EditorWindow, int key, int scancode, int action, int m
     }
 }
 
-void HandleBackSpace () {
-    if (CursorY || CursorX) {
-        int state = glfwGetKey(EditorWindow, GLFW_KEY_BACKSPACE);
-        // << (state == GLFW_PRESS) << std::endl;
-        if (state == GLFW_PRESS) {
-            if (timerBS == 0) {
-                if (CursorY) {
-                    Lines[CursorX].erase(CursorY - 1, 1);
-                    CursorY--;
-                } else {
-                    std::string s = Lines[CursorX];
-                    CursorY = Lines[CursorX - 1].size();
-                    Lines[CursorX - 1] += s;
-                    Lines.erase(Lines.begin() + CursorX);
-                    CursorX--;
-                }
-                timerBS = 2;
-            } else {
-                timerBS--;
-                if (timerBS % 10 == 9) {
-                    if (CursorY) {
-                        Lines[CursorX].erase(CursorY - 1, 1);
-                        CursorY--;
-                    } else {
-                        std::string s = Lines[CursorX];
-                        CursorY = Lines[CursorX - 1].size();
-                        Lines[CursorX - 1] += s;
-                        Lines.erase(Lines.begin() + CursorX);
-                        CursorX--;
-                    }
-                }
-                if (timerBS == 0)
-                    state = 1;
-            }
-        } else {
-            
-            timerBS = 60;
-        }
+class Key {
+public:
+    Key(void (*Function)(), int FirstKey, int SecondKey = -1) 
+        :m_Time(60), m_FirstKey(FirstKey), m_SecondKey(SecondKey), m_Function(Function) {};
+    void Update();
+private:
+    int m_Time = 60;
+    int m_FirstKey = -1;
+    int m_SecondKey = -1;
+    void (*m_Function)();
+};
+
+void CtrlPos () {
+    sz *= 1.111f;
+    UpdateLeftAndUp();
+}
+
+void CtrlNeg () {
+    sz *= 0.9f;
+    UpdateLeftAndUp();
+}
+
+void CtrlO () {
+    OpenFile();
+}
+
+void CtrlS () {
+    SaveFile();
+}
+
+void Up () {
+    CursorX--;
+}
+
+void Down() {
+    CursorX++;
+}
+
+void Right() {
+    CursorY++;
+    if (CursorY > (int)Lines[CursorX].size() && CursorX < ((int)Lines.size() - 1)) {
+        CursorX++;
+        CursorY = 0;
     }
 }
 
-void HandleDown () {
-    
-    if (CursorX != (Lines.size() - 1)) {
-        int state = glfwGetKey(EditorWindow, GLFW_KEY_DOWN);
-        // << (state == GLFW_PRESS) << std::endl;
-        if (state == GLFW_PRESS) {
-            if (timerDW == 0) {
-                CursorX++;
-                timerDW = 2;
-            } else {
-                timerDW--;
-                if (timerDW % 10 == 9) {
-                    CursorX++;
-                }
-            }
-        } else {
-            
-            timerDW = 60;
-        }
+void Left () {
+    CursorY--;
+    if (CursorY < 0 && CursorX > 0) {
+        CursorX--;
+        CursorY = (int)Lines[CursorX].size();
     }
 }
 
-void HandleUp () {
-    
-    if (CursorX != 0) {
-        int state = glfwGetKey(EditorWindow, GLFW_KEY_UP);
-        // << (state == GLFW_PRESS) << std::endl;
-        if (state == GLFW_PRESS) {
-            if (timerUP == 0) {
-                CursorX--;
-                timerUP = 2;
-            } else {
-                timerUP--;
-                if (timerUP % 10 == 9) {
-                    CursorX--;
-                }
-            }
-        } else {
-            
-            timerUP = 60;
-        }
-    }
+void Enter() {
+    int siz = Lines[CursorX].size() - CursorY;
+    Lines.insert(Lines.begin() + CursorX + 1, Lines[CursorX].substr(CursorY, siz));
+    Lines[CursorX].erase(CursorY, siz);
+    CursorX++;
+    CursorY = 0;
 }
 
-void HandleLeft () {
-    
-    if (CursorY != 0) {
-        int state = glfwGetKey(EditorWindow, GLFW_KEY_LEFT);
-        // << (state == GLFW_PRESS) << std::endl;
-        if (state == GLFW_PRESS) {
-            if (timerLF == 0) {
-                CursorY--;
-                timerLF = 2;
-            } else {
-                timerLF--;
-                if (timerLF % 10 == 9) {
-                    CursorY--;
-                }
-            }
-        } else {
-            
-            timerLF = 60;
-        }
-    }
-}
-
-void HandleRight () {
-    
-    if (CursorY != (Lines[CursorX].size())) {
-        int state = glfwGetKey(EditorWindow, GLFW_KEY_RIGHT);
-        // << (state == GLFW_PRESS) << std::endl;
-        if (state == GLFW_PRESS) {
-            if (timerRG == 0) {
-                CursorY++;
-                timerRG = 2;
-            } else {
-                timerRG--;
-                if (timerRG % 10 == 9) {
-                    CursorY++;
-                }
-            }
-        } else {
-            
-            timerRG = 60;
-        }
-    }
-}
-
-
-void HandleEnter () {
-    int state = glfwGetKey(EditorWindow, GLFW_KEY_ENTER);
-    // << (state == GLFW_PRESS) << std::endl;
-    if (state == GLFW_PRESS) {
-        if (timerEN == 0) {
-            int siz = Lines[CursorX].size() - CursorY;
-            
-            Lines.insert(Lines.begin() + CursorX + 1, Lines[CursorX].substr(CursorY, siz));
-            Lines[CursorX].erase(CursorY, siz);
-            CursorX++;
-            CursorY = 0;
-            timerEN = 2;
-        } else {
-            timerEN--;
-            if (timerEN % 12 == 11) {
-                int siz = Lines[CursorX].size() - CursorY;
-
-                Lines.insert(Lines.begin() + CursorX + 1, Lines[CursorX].substr(CursorY, siz));
-                Lines[CursorX].erase(CursorY, siz);
-                CursorX++;
-                CursorY = 0;
-            }
-        }
+void BackSpace() {
+    if (CursorY) { 
+        Lines[CursorX].erase(CursorY - 1, 1);
+        CursorY--;
     } else {
-        
-        timerEN = 60;
+        std::string s = Lines[CursorX];
+        CursorY = Lines[CursorX - 1].size();
+        Lines[CursorX - 1] += s;
+        Lines.erase(Lines.begin() + CursorX);
+        CursorX--;
     }
 }
 
-void HandleCtrlNeg () {
-    int state = glfwGetKey(EditorWindow, GLFW_KEY_RIGHT_CONTROL);
-    int state2 = glfwGetKey(EditorWindow, GLFW_KEY_MINUS);
-
-    // << (state == GLFW_PRESS) << std::endl;
+void Key::Update () {
+    int state = glfwGetKey(EditorWindow, m_FirstKey);
+    int state2 = (m_SecondKey == -1 ? GLFW_PRESS : glfwGetKey(EditorWindow, m_SecondKey));
     if (state == GLFW_PRESS && state2 == GLFW_PRESS) {
-        if (timerCN == 0) {
-            sz *= 0.9f;
-            UpdateLeftAndUp();
-            timerCN = 59;
+        if (m_Time == 0) {
+            m_Function();
+            m_Time = 2;
         } else {
-            timerCN--;
-            if (timerCN % 12 == 11) {
-                sz *= 0.9f;
-                UpdateLeftAndUp();
-            }
-
-        }
-    } else {
-        
-        timerCN = 60;
-    }
-}
-
-void HandleCtrlPos () {
-    int state = glfwGetKey(EditorWindow, GLFW_KEY_RIGHT_CONTROL);
-    int state2 = glfwGetKey(EditorWindow, GLFW_KEY_EQUAL);
-    if (state == GLFW_PRESS && state2 == GLFW_PRESS) {
-        if (timerCP == 0) {
-            sz *= 1.111f;
-            UpdateLeftAndUp();
-            timerCP = 59;
-        } else {
-            timerCP--;
-            if (timerCP % 12 == 11) {
-                sz *= 1.111f;
-                UpdateLeftAndUp();
+            m_Time--;
+            if (m_Time % 12 == 11) {
+                m_Function();
             }
         }
     } else {
-        timerCP = 60;
+        m_Time = 60;
     }
 }
 
-void HandleSave () {
-    int state = glfwGetKey(EditorWindow, GLFW_KEY_LEFT_CONTROL);
-    int state2 = glfwGetKey(EditorWindow, GLFW_KEY_S);
-    if (state == GLFW_PRESS && state2 == GLFW_PRESS) {
-        if (timerSV == 60) {
-            SaveFile();
-        }
-        timerSV--;
-    } else {
-        timerSV = 60;
-    }
-}
-
-void HandleOpen () {
-    int state = glfwGetKey(EditorWindow, GLFW_KEY_LEFT_CONTROL);
-    int state2 = glfwGetKey(EditorWindow, GLFW_KEY_O);
-    if (state == GLFW_PRESS && state2 == GLFW_PRESS) {
-        if (timerOP == 60) {
-            OpenFile();
-        }
-        timerOP--;
-    } else {
-        timerOP = 60;
-    }
-}
+Key Ctrl_Pos(CtrlPos, GLFW_KEY_RIGHT_CONTROL, GLFW_KEY_EQUAL);
+Key Ctrl_Neg(CtrlNeg, GLFW_KEY_RIGHT_CONTROL, GLFW_KEY_MINUS);
+Key GoUp(Up, GLFW_KEY_UP, -1);
+Key GoDown(Down, GLFW_KEY_DOWN, -1);
+Key GoRight(Right, GLFW_KEY_RIGHT, -1);
+Key GoLeft(Left, GLFW_KEY_LEFT, -1);
+Key Backspace (BackSpace, GLFW_KEY_BACKSPACE, -1);
+Key EnterKey (Enter, GLFW_KEY_ENTER, -1);
+Key Ctrl_O (CtrlO, GLFW_KEY_LEFT_CONTROL, GLFW_KEY_O);
+Key Ctrl_S (CtrlS, GLFW_KEY_LEFT_CONTROL, GLFW_KEY_S);
 
 void HandleKeys() {
-    HandleBackSpace();
-    HandleUp();
-    HandleDown();
-    HandleLeft();
-    HandleRight();
-    HandleEnter();
-    HandleCtrlNeg();
-    HandleCtrlPos();
-    HandleSave();
-    HandleOpen();
+    Ctrl_Pos.Update();  
+    Ctrl_Neg.Update();  
+    GoDown.Update();
+    GoRight.Update();
+    GoUp.Update();
+    GoLeft.Update();
+    Backspace.Update();
+    EnterKey.Update();
+    Ctrl_O.Update();
+    Ctrl_S.Update();
 }

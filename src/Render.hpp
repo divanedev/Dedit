@@ -1,13 +1,15 @@
 #pragma once
-// WEF
+
+#include <iostream>
 #include <GL/glew.h>
 #include "Buttons.hpp"
 int frame = 0;
 unsigned int va, vb, ib;
 unsigned int Shader;
 const int OUP = 3, OLEFT = 3;
+float WEF = 1.0f;
 
-void draw () {
+void Draw () {
     frame++;
     HandleKeys();
     sz = std::max(sz, 0.06f);
@@ -154,12 +156,6 @@ void draw () {
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glUseProgram(Shader);
-    glBindVertexArray(va);
-    glBindBuffer(GL_ARRAY_BUFFER, vb);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-
-
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(newPositions), newPositions);
 
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(newElements), newElements);
@@ -167,4 +163,80 @@ void draw () {
 
     glfwSwapBuffers(EditorWindow);
     glfwPollEvents();
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    HMUL = (float)height / 640.0f;
+    WMUL = (float)width / 640.0f;
+    UpdateLeftAndUp();
+    glViewport(0, 0, width, height);
+    Draw();
+}
+
+void Init () {
+    int GlfwMajorVersion, GlfwMinorVersion, GlfwRevision;
+    glfwGetVersion(&GlfwMajorVersion, &GlfwMinorVersion, &GlfwRevision);
+    std::cout << std::endl;
+    std:: cout << "GLFW version : " << ' ' << GlfwMajorVersion << "." << GlfwMinorVersion << ' ' << GlfwRevision << std::endl;
+    
+    std::cout << std::endl;
+    if (!glfwInit()) {
+        std::cout << "GLFW did not start properly!" << std::endl;
+        exit(-1);
+    }
+
+    glfwSetErrorCallback(GlfwErrorHappened);
+
+    EditorWindow = glfwCreateWindow(640, 640, "Dedit", NULL, NULL);
+
+    if (!EditorWindow) {
+        std::cout << "EditorWindow did not start correctly!" << std::endl;
+        exit(-1);
+    }
+
+    glfwMakeContextCurrent(EditorWindow);
+    glfwSetFramebufferSizeCallback(EditorWindow, framebuffer_size_callback);
+    glfwSwapInterval(1);
+    
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwSetWindowSizeLimits(EditorWindow, 300, 240, GLFW_DONT_CARE, GLFW_DONT_CARE);
+
+    glfwSetCharCallback(EditorWindow, CharInput);
+    glfwSetKeyCallback(EditorWindow, KeyInput);
+
+    if (glewInit() != GLEW_OK) {
+        std::cout << "Coud not Initilize GLEW" << std::endl;
+    }
+
+    glEnable(GL_DEBUG_OUTPUT);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    glDebugMessageCallback(OpenGlErrorHappend, NULL);
+
+    glGenVertexArrays(1, &va);
+    glBindVertexArray(va);
+
+    glGenBuffers(1, &vb);
+    glBindBuffer(GL_ARRAY_BUFFER, vb);
+    glBufferData(GL_ARRAY_BUFFER, WEF * 53 * 53 * 4 * 4 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (const void*)(2 * sizeof(float)));
+
+    glGenBuffers(1, &ib);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 53 * 53 * 2 * 3 * sizeof (unsigned int), nullptr, GL_DYNAMIC_DRAW);
+
+    std::pair <std::string, std::string> p = ParseShader("../res/shaders/basic.shader");
+
+    std::string VertexShaderCode = p.first;
+    std::string FragmentShaderCode = p.second;
+
+    Shader = CreateShaderProgram(VertexShaderCode, FragmentShaderCode);
+
+    glUseProgram(Shader);
 }
