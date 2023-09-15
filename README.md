@@ -1,2 +1,2 @@
-# Detit
+# Dedit
 Editor in OpenGl
